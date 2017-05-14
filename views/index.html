@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Safe Neighborhood</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" 
+		rel="stylesheet" type="text/css" >
+        <link rel="icon" type="image/png" href="/images/Snh.png" >
+        <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.6/angular.min.js"></script>
+        <script src="https://code.jquery.com/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="
+        crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/1.1.1/Chart.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" type="text/javascript"></script>
+        <script src="CriminalWatchApp.js" type="text/javascript"></script>
+        <style>
+            body {
+                background-image: url("http://www.cubebreaker.com/wp-content/uploads/2014/04/skyline-01-new-york-city.jpg");
+                height: 100%;
+                -webkit-background-size: cover;
+                -moz-background-size: cover;
+                -o-background-size: cover;
+                background-size: cover;
+                color: white;
+            }
+        </style>
+    </head>
+    
+    <body ng-app="CrimeWatch" ng-controller="CrimeWatchCtrl" class="view">
+    <section class="container">
+        <div class="form-group">
+            <div class="paragraphs">
+			  <div class="row">
+			    <div class="span4">
+			      <div class="clearfix content-heading">
+			      <h1>&nbsp; IS MY NEIGHBORHOOD SAVE?</h1>
+			      </div>
+			      <p>Search sex offenders in my neighborhood.</p>
+			    </div>
+			  </div>
+			</div>
+            <form>
+                <div style="display:inline-block;" id="locType">
+                    <label class="radio-inline" ><input type="radio" name="optradio" checked ng-value="true" ng-model="isZip" id="zipRadioBtn">Zip Code</label>
+                    <label class="radio-inline" ><input type="radio" name="optradio" ng-value="false" ng-model="isZip" id="cityRadioBtn">City</label>
+
+                    </div>
+
+                
+                <select class="form-control" id="citySelect" ng-model="query" ng-disabled="isZip">
+                		<option value="52240" selected="selected" disabled>Please select your city, or specify below.</option>
+		                    	<option value="Des+Moines">Des Moines</option>
+		                    	<option value="Cedar+Rapids">Cedar Rapids</option>
+		                    	<option value="Sioux+City">Sioux City</option>
+		                    	<option value="Iowa+City">Iowa City</option>
+		                    	<option value="West+Des+Moines">West Des Moines</option>
+		                    </select>
+                <input type="text" ng-model="query" class="form-control" placeholder="Search inquery" />
+                <label>Please elect the range (in miles)</label>
+                <select ng-model="range" id="selectRange" style="color:black;" class="form-control">
+                </select>
+                <input type="button" ng-click="getData()" class="form-control" value = "Search"/>
+                <input type="button" ng-click="getPolice()" class="form-control" value="Find Police"></input>
+                <input type="button" ng-show="submitted" ng-click="getNhoodCharacteristics()" class="form-control" value="Neighborhood Character"></input>
+            	<a href="http://www.zipcodestogo.com/Iowa/" target="_blank"><small>Zip Code Lookup</small></a>            
+            </form>
+        </div>
+        <div id="displayArea" class="container">
+	        <ul class="nav nav-pills">
+	        	<li class="nav-item"><a class="nav-link" href="#criminalTable" data-toggle="tab"></a>Criminals {{modelData.length}}</li>
+	        	<li class="nav-item"><a href="#chartArea" data-toggle="tab" class="nav-link">Charts</a></li>
+	        	<li class="nav-item"><a href="#PoliceSearch" data-toggle="tab" class="nav-link" >Police Stations</a></li>
+	        </ul>
+	        <div>
+	        	<div id = "criminalTable" class="tab-pane">
+		        	<table class="table">
+		        		<thead>
+		        			<tr>
+		        				<th>Name</th>
+		        				<th>City</th>
+		        				<th>Address</th>	        		
+                                <th>Adult Victims</th>
+                                <th>Minor Victims</th>
+                                <th>Weight (lbs)</th>
+                                </tr>
+		        		</thead>
+                        <tbody>
+		        			<tr ng-repeat="model in modelData">
+		        				<td>{{model.display_name}}</td>
+		        				<td>{{model.city}}</td>
+		        				<td>{{model.address}}</td>
+		        				<td>{{model.victim_adults}}</td>
+		        				<td>{{model.victim_minors}}</td>
+		        				<td>{{model.victim_unknown}}</td>
+		        				<td>{{model.weight_pounds}}</td>
+		        			</tr>
+		        		</tbody>
+		        	</table>
+	        	</div>
+	        	<div id="chartArea" class="tab-pane">
+	        		<canvas id="mycanvas" width="600" height="400"></canvas>
+	        	</div>
+	        	<div id="PoliceSearch" class="tab-pane">
+	        		<table class="table">
+	        			<thead>
+	        				<tr>
+	        					<th>Address</th>
+	        					<th>Latitude</th>
+	        					<th>Longitude</th>
+	        					<th>Phone</th>
+	        					<th>Google Maps</th>
+	        				</tr>
+	        			</thead>
+	        			<tbody>
+	        				<tr ng-repeat="m in policeStation">
+	        					<td>{{m.location.formattedAddress[0]+' '+m.location.formattedAddress[1]}}</td>
+	        					<td>{{m.location.lat}}</td>
+	        					<td>{{m.location.lon}}</td>
+	        					<td>{{m.contact.formattedPhone}}</td>
+	        					<td><a href="https://www.google.com/maps/@{{m.location.lat}},{{m.location.lon}},12z" target="_blank">Open</a></td>
+	        				</tr>
+	        			</tbody>
+	        		</table>
+	        	</div>
+        	</div>
+        </div>
+        </section>
+        <script>
+            $(document).ready(function(){
+                for (var i=1;i<=100;i++){
+                    $('#selectRange').append($('<option></option>').val(i).html(i));
+                }
+                   
+                   
+      			function makeChart(chrt, myarr,chartLabel, xAxisLabels){
+                   return new Chart(chrt).Bar({
+                    'labels': xAxisLabels, 
+                    'datasets': [{
+                            'labels': chartLabel, 
+                            'fillColor': "rgba(233,30,99,0.8)",
+                            'strokeColor': "rgba(233,30,99,0.8)",
+                            'highlightFill': "rgba(0,188,212,0.75)",
+                            'highlightStroke': "rgba(0,188,212,1)",
+                            'data': myarr 
+                        }]
+                });
+              };
+              
+              var chrt = $("#mycanvas")[0].getContext("2d");
+              var myarr = [100,100,8,1];
+              var chartLabel = 'Iowa Sex Offenders';
+              var xAxisLabels = ['Des Moines','Sioux City','Iowa City','Cedar Rapids'];
+              var myFirstChart =makeChart(chrt,myarr,chartLabel,xAxisLabels);
+            });
+		</script>
+</body>
+</html>
